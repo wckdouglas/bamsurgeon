@@ -77,14 +77,18 @@ def dictlist(fn):
     return d
 
 
-def makemut(args, chrom, start, end, vaf, ins, avoid, alignopts):
+def makemut(args, chrom, start, end, vaf, ins, indel, avoid, alignopts):
     ''' is ins is a sequence, it will is inserted at start, otherwise delete from start to end'''
 
     if args.seed is not None: random.seed(int(args.seed) + int(start))
 
     mutid = chrom + '_' + str(start) + '_' + str(end) + '_' + str(vaf)
-    if ins is None:
+    if ins is None and indel is None:
         mutid += ':DEL'
+    elif indel is not None:
+        assert '/' in indel, 'Indel pattern should be XX/YY'
+        mut = ':DEL:' + indel.split('/')[0] + ' :INS:' + indel.split('/')[1]
+        ins = indel.split('/')[1]
     else:
         mutid += ':INS:' + ins
 
@@ -95,7 +99,7 @@ def makemut(args, chrom, start, end, vaf, ins, avoid, alignopts):
     tmpbams = []
 
     is_insertion = ins is not None
-    is_deletion  = ins is None
+    is_deletion  = ins is None or indel is not None
 
     snvfrac = float(args.snvfrac)
 
@@ -331,13 +335,16 @@ def main(args):
             vaf   = float(c[3])
             type  = c[4]
             ins   = None
+            indel = None
 
-            assert type in ('INS', 'DEL')
+            assert type in ('INS', 'DEL', 'INDEL')
             if type == 'INS':
                 ins = c[5]
+            elif type == 'INDEL':
+                indel = c[5] # CC/AAAA -> delete CC and add AAAA
 
             # make mutation (submit job to thread pool)
-            result = pool.apply_async(makemut, [args, chrom, start, end, vaf, ins, avoid, alignopts])
+            result = pool.apply_async(makemut, [args, chrom, start, end, vaf, ins, indel, avoid, alignopts])
             results.append(result)
             ntried += 1
 
