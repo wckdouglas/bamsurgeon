@@ -91,7 +91,7 @@ def makeins(read, start, ins, debug=False):
     return newseq
 
 
-def makedel(read, chrom, start, end, ref, debug=False):
+def makedel(read, chrom, start, end, ref, ins_seq = None, debug=False):
     if len(read.seq) < end-start-2:
         logger.warning("INDELs (del) must be less than one read length, skipped read: %s" % read.query_name)
         return read.seq
@@ -157,7 +157,7 @@ def makedel(read, chrom, start, end, ref, debug=False):
     if debug:
         logger.debug("DEBUG: DEL: newseq: %s" % (left + right))
 
-    return left + right
+    return left + ins_seq + right
 
 
 def find_mate(read, bam):
@@ -227,7 +227,7 @@ def mutate(args, log, bamfile, bammate, chrom, mutstart, mutend, mutpos_list, av
                                 mutreads[extqname] = makeins(pread.alignment, indel_start, ins_seq)
 
                             if is_deletion:
-                                mutreads[extqname] = makedel(pread.alignment, chrom, indel_start, indel_end, reffile)
+                                mutreads[extqname] = makedel(pread.alignment, chrom, indel_start, indel_end, reffile, ins_seq)
 
                             mate = None
                             if not args.single:
