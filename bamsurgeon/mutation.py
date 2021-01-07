@@ -92,6 +92,7 @@ def makeins(read, start, ins, debug=False):
 
 
 def makedel(read, chrom, start, end, ref, ins_seq = None, debug=False):
+    ins_seq = in_seq or ''
     if len(read.seq) < end-start-2:
         logger.warning("INDELs (del) must be less than one read length, skipped read: %s" % read.query_name)
         return read.seq
